@@ -1,4 +1,4 @@
-{
+%{
 #include <stdio.h>
 #include "y.tab.h"
 %}
@@ -9,5 +9,8 @@
                 yylval = atoi(yytext);
 		return(NUMBER);
               }
-[^0123456789] return(yytext[0]);
+[()]          {
+                return(yytext[0]);
+              }
+[^0123456789]   return(yytext[0]);
 %%
