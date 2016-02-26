@@ -1,3 +1,4 @@
+
 %{
 #include <stdio.h>
 %}
@@ -7,6 +8,7 @@
 %token NUMBER
 
 %left '+' '-'
+%left '*' '/'
 
 %%
 
@@ -26,7 +28,29 @@ calc: expr
       }
       ;
 
-expr: expr '+' expr
+expr: '(' expr ')'
+      {
+        $$ = $2;
+      }
+      |
+      expr '*' expr
+      {
+        $$ = $1 * $3;
+      }
+      |
+      expr '/' expr
+      {
+	if ($3 != 0)
+	{
+	  $$ = $1 / $3;
+	}
+	else
+	{
+	  yyerror();
+	}
+      }
+      |
+      expr '+' expr
       {
 	$$ = $1 + $3;
       }
