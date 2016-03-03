@@ -1,4 +1,3 @@
-
 %{
 #include <stdio.h>
 %}
@@ -18,7 +17,7 @@ main:
       |
       main error '\n'
       {
-	yyerror();
+	calcerror();
       }
       ;
 
@@ -46,7 +45,7 @@ expr: '(' expr ')'
 	}
 	else
 	{
-	  yyerror();
+	  calcerror();
 	}
       }
       |
@@ -69,15 +68,15 @@ expr: '(' expr ')'
 
 main()
 {
-  return (yyparse());
+  return (calcparse());
 }
 
-yyerror()
+calcerror()
 {
   printf("Error!\n");
 }
 
-yywrap()
+calcwrap()
 {
   return(1);
 }
