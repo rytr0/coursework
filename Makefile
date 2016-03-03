@@ -1,11 +1,11 @@
-calculator: lex.yy.c y.tab.h y.tab.c
-	gcc y.tab.c lex.yy.c -o calculator
+calculator: lex.calc.c calc.tab.h calc.tab.c
+	gcc calc.tab.c lex.calc.c -o calc
 
-lex.yy.c: calc.lex
-	lex calc.lex
+lex.calc.c: calc.lex
+	lex -P calc calc.lex
 
-y.tab.c: calc.yacc
-	yacc calc.yacc
+calc.tab.c: calc.yacc
+	yacc -p calc calc.yacc
 
-y.tab.h: calc.yacc
+calc.tab.h: calc.yacc
 	yacc -d calc.yacc
