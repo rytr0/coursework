@@ -6,6 +6,9 @@
 
 %token NUMBER
 
+%file-prefix "calc"
+%name-prefix "calc"
+
 %left '+' '-'
 %left '*' '/'
 
@@ -66,9 +69,27 @@ expr: '(' expr ')'
       ;
 %%
 
-main()
+main(int argc, char *argv[])
 {
-  return (calcparse());
+  extern FILE *calcin;
+  calcin = fopen("aux.txt", "w");
+  if (argc > 1)
+  {
+    int i;
+    for (i = 1; i < argc; i++)
+      {
+	fprintf(calcin, "%s", argv[i]);
+      }
+    fprintf(calcin, "\n");
+    fclose(calcin);
+    calcin = fopen("aux.txt", "r");
+  }
+  else
+    calcin = stdin;
+
+  calcparse();
+
+  fclose(calcin);
 }
 
 calcerror()
