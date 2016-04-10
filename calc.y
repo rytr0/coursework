@@ -1,16 +1,70 @@
 %{
+#include <complex.h>
 #include <stdio.h>
+#include "typedef.h"
+
+type_value high_type(type_value t1, type_value t2)
+{
+  if (t1 == COMPLEX || t2 == COMPLEX)
+    return COMPLEX;
+  else
+    if (t1 == DOUBLE || t2 == DOUBLE)
+      return DOUBLE;
+    else
+      return INTEGER;
+}
+
+void cast_to_target_type(type_value target, struct_value *val)
+{
+  switch(target)
+  {
+  case COMPLEX:
+    switch(val->type)
+    {
+    case COMPLEX:
+      break;
+    case DOUBLE:
+      val->cval = val->dval + I;
+      break;
+    case INTEGER:
+      val->cval = val->ival + I;
+      break;
+    }
+    break;
+  case DOUBLE:
+    switch(val->type)
+    {
+    case DOUBLE:
+      break;
+    case INTEGER:
+      val->dval = val->ival;
+      break;
+    }
+    break;
+  case INTEGER:
+    break;
+  }
+}
 %}
-
-%start main
-
-%token NUMBER
 
 %file-prefix "calc"
 %name-prefix "calc"
 
+%defines
+
+%union
+{
+  struct_value value;
+};
+
 %left '+' '-'
 %left '*' '/'
+
+%start main
+
+%token <value> NUMBER
+
+%type <value> expr
 
 %%
 
@@ -26,45 +80,134 @@ main:
 
 calc: expr
       {
-	printf("%d\n", $1);
+	switch($1.type)
+	{
+	case COMPLEX:
+	  printf("%f + %fi\n", creal($1.cval), cimag($1.cval));
+	  break;
+	case DOUBLE:
+	  printf("%f\n", $1.dval);
+	  break;
+	case INTEGER:
+	  printf("%d\n", $1.ival);
+	  break;
+	}
       }
       ;
 
 expr: '(' expr ')'
       {
-        $$ = $2;
-      }
-      |
-      expr '*' expr
-      {
-        $$ = $1 * $3;
-      }
-      |
-      expr '/' expr
-      {
-	if ($3 != 0)
+	switch($2.type)
 	{
-	  $$ = $1 / $3;
-	}
-	else
-	{
-	  calcerror();
+	case COMPLEX:
+	  $$.type = COMPLEX;
+	  $$.cval = $2.cval;
+	case INTEGER:
+	  $$.type = INTEGER;
+	  $$.ival = $2.ival;
+	  break;
+	case DOUBLE:
+	  $$.type = DOUBLE;
+	  $$.dval = $2.dval;
+	  break;
 	}
       }
       |
       expr '+' expr
       {
-	$$ = $1 + $3;
+	$$.type = high_type($1.type, $3.type);
+	cast_to_target_type($$.type, &$1);
+	cast_to_target_type($$.type, &$3);
+	
+	switch($$.type)
+	{
+	case COMPLEX:
+	  $$.cval = $1.cval + $3.cval;
+	  break;
+	case DOUBLE:
+	  $$.dval = $1.dval + $3.dval;
+	  break;
+	case INTEGER:
+	  $$.ival = $1.ival + $3.ival;
+	  break;
+	}
       }
       |
       expr '-' expr
       {
-	$$ = $1 - $3;
+	$$.type = high_type($1.type, $3.type);
+	cast_to_target_type($$.type, &$1);
+	cast_to_target_type($$.type, &$3);
+
+	switch($$.type)
+	{
+	case COMPLEX:
+	  $$.cval = $1.cval - $3.cval;
+	  break;
+	case DOUBLE:
+	  $$.dval = $1.dval - $3.dval;
+	  break;
+	case INTEGER:
+	  $$.ival = $1.ival - $3.ival;
+	  break;
+	}
+      }
+      |
+      expr '*' expr
+      {
+	$$.type = high_type($1.type, $3.type);
+	cast_to_target_type($$.type, &$1);
+	cast_to_target_type($$.type, &$3);
+
+	switch($$.type)
+	{
+	case COMPLEX:
+	  $$.cval = $1.cval * $3.cval;
+	  break;
+	case DOUBLE:
+	  $$.dval = $1.dval * $3.dval;
+	  break;
+	case INTEGER:
+	  $$.ival = $1.ival * $3.ival;
+	  break;
+	}
+      }
+      |
+      expr '/' expr
+      {
+	$$.type = high_type($1.type, $3.type);
+	cast_to_target_type($$.type, &$1);
+	cast_to_target_type($$.type, &$3);
+	switch($$.type)
+	{
+	case COMPLEX:
+	  $$.cval = $1.cval / $3.cval;
+	  break;
+	case DOUBLE:
+	  $$.dval = $1.dval / $3.dval;
+	  break;
+	case INTEGER:
+	  $$.ival = $1.ival / $3.ival;
+	  break;
+	}
       }
       |
       NUMBER
       {
-	$$ = $1;
+	switch($1.type)
+	{
+	case COMPLEX:
+	  $$.type = COMPLEX;
+	  $$.cval = $1.cval;
+	case DOUBLE:
+	  $$.type = DOUBLE;
+	  $$.dval = $1.dval;
+	  break;
+	case INTEGER:
+	  $$.type = INTEGER;
+	  $$.ival = $1.ival;
+	  break;
+	}
       }
       ;
 %%
