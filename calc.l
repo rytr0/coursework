@@ -1,4 +1,6 @@
 %{
+#include <complex.h>
+#include "typedef.h"
 #include "calc.tab.h"
 %}
 
@@ -7,12 +9,23 @@
 %%
 " "            ;
 
-[0-9]+         {
-                 calclval = atoi(calctext);
-		 return(NUMBER);
+[i]            {
+                 calclval.value.type = COMPLEX;
+                 calclval.value.cval = I;
+                 return NUMBER;
                }
 
-[()]           return(calctext[0]);
+[0-9]+\.[0-9]+ {
+                 calclval.value.type = DOUBLE;
+                 calclval.value.dval = atof(calctext);
+                 return NUMBER;
+               }
 
-[^0123456789]  return(calctext[0]);
+[0-9]+         {
+                 calclval.value.type = INTEGER;
+                 calclval.value.ival = atoi(calctext);
+		 return NUMBER;
+               }
+
+[^0-9]  return(calctext[0]);
 %%
