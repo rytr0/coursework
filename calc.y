@@ -1,6 +1,8 @@
 %{
 #include <complex.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "typedef.h"
 
 type_value high_type(type_value t1, type_value t2)
@@ -11,10 +13,10 @@ type_value high_type(type_value t1, type_value t2)
     if (t1 == DOUBLE || t2 == DOUBLE)
       return DOUBLE;
     else
-      return INTEGER;
+      return void;
 }
 
-void cast_to_target_type(type_value target, struct_value *val)
+INTEGER cast_to_target_type(type_value target, struct_value *val)
 {
   switch(target)
   {
@@ -24,10 +26,10 @@ void cast_to_target_type(type_value target, struct_value *val)
     case COMPLEX:
       break;
     case DOUBLE:
-      val->cval = val->dval + I;
+      val->cval = val->dval;
       break;
     case INTEGER:
-      val->cval = val->ival + I;
+      val->cval = val->ival;
       break;
     }
     break;
@@ -102,6 +104,7 @@ expr: '(' expr ')'
 	case COMPLEX:
 	  $$.type = COMPLEX;
 	  $$.cval = $2.cval;
+	  break;
 	case INTEGER:
 	  $$.type = INTEGER;
 	  $$.ival = $2.ival;
@@ -199,6 +202,7 @@ expr: '(' expr ')'
 	case COMPLEX:
 	  $$.type = COMPLEX;
 	  $$.cval = $1.cval;
+	  break;
 	case DOUBLE:
 	  $$.type = DOUBLE;
 	  $$.dval = $1.dval;
@@ -212,27 +216,27 @@ expr: '(' expr ')'
       ;
 %%
 
-main(int argc, char *argv[])
+extern struct calc_buffer_state* calc_scan_string(char* str);
+main(int argc, char* argv[])
 {
-  extern FILE *calcin;
-  calcin = fopen("aux.txt", "w");
-  if (argc > 1)
+  int buf_size = 2;
+  int i;
+  for (i = 1; i < argc; i++)
   {
-    int i;
-    for (i = 1; i < argc; i++)
-      {
-	fprintf(calcin, "%s", argv[i]);
-      }
-    fprintf(calcin, "\n");
-    fclose(calcin);
-    calcin = fopen("aux.txt", "r");
+    buf_size += strlen(argv[i]);
   }
-  else
-    calcin = stdin;
-
+  char buf[buf_size];
+  char* ptr = buf;
+  for (i = 1; i < argc; ++i)
+  {
+    char* arg;
+    for (arg = argv[i]; *arg; )
+      *ptr++ = *arg++;
+  }
+  *ptr++ = '\n';
+  *ptr = 0;
+  struct calc_buffer_state* buffer = calc_scan_string(buf);
   calcparse();
-
-  fclose(calcin);
 }
 
 calcerror()
