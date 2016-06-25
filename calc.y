@@ -13,10 +13,10 @@ type_value high_type(type_value t1, type_value t2)
     if (t1 == DOUBLE || t2 == DOUBLE)
       return DOUBLE;
     else
-      return void;
+      return INTEGER;
 }
 
-INTEGER cast_to_target_type(type_value target, struct_value *val)
+void cast_to_target_type(type_value target, struct_value *val)
 {
   switch(target)
   {
@@ -70,17 +70,7 @@ INTEGER cast_to_target_type(type_value target, struct_value *val)
 
 %%
 
-main: 
-      |
-      main calc '\n'
-      |
-      main error '\n'
-      {
-	calcerror();
-      }
-      ;
-
-calc: expr
+main: expr '\n'
       {
 	switch($1.type)
 	{
@@ -184,13 +174,22 @@ expr: '(' expr ')'
 	switch($$.type)
 	{
 	case COMPLEX:
-	  $$.cval = $1.cval / $3.cval;
+	  if (creal($3.cval) == 0.0 && cimag($1.cval) == 0.0)
+	    calcerror();
+	  else
+	    $$.cval = $1.cval / $3.cval;
 	  break;
 	case DOUBLE:
-	  $$.dval = $1.dval / $3.dval;
+	  if ($3.dval == 0.0)
+	    calcerror();
+	  else
+	    $$.dval = $1.dval / $3.dval;
 	  break;
 	case INTEGER:
-	  $$.ival = $1.ival / $3.ival;
+	  if ($3.ival == 0)
+	    calcerror();
+	  else
+	    $$.ival = $1.ival / $3.ival;
 	  break;
 	}
       }
