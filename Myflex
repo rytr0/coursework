@@ -1,0 +1,189 @@
+#include <stdio.h>
+#include <malloc.h>
+#include <stdbool.h>
+
+FILE* input;
+FILE* output;
+
+typedef struct my_set
+{
+  int size;
+  int *array;
+} set;
+
+void push(set *s, int x)
+{
+  int i;
+  
+  if (s->array == NULL)
+    s->size = 0;
+
+  for (i = 0; i < s->size; i++)
+    {
+      if (s->array[i] >= x)
+	return;
+    }
+  
+  s->size++;
+  s->array = (int*)realloc(s->array, s->size * sizeof(int));
+  s->array[s->size - 1] = x;
+
+  for (i = s->size - 1; i >= 1; i--)
+    {
+      if (s->array[i] < s->array[i - 1])
+	{
+	  int temp = s->array[i];
+	  s->array[i] = s->array[i - 1];
+	  s->array[i - 1] = temp;
+	}
+      else
+	{
+	  return;
+	}
+    }
+}
+
+void scan(set** NFA)
+{
+  int m;
+  fscanf(input, "%d", &m);
+
+  int a, b;
+  char c1, c2;
+  
+  int i;
+
+  for (i = 0; i < m; i++)
+   {
+     fscanf(input, "%d%d%c%c", &a, &b, &c1, &c2);
+     push(&NFA[a][c2], b);  
+   }
+}
+
+void print(int** DFA, int n)
+{
+  int i, j, k;
+
+  for (i = 0; i < n; i++)
+    {
+      for (j = 0; j < 256; j++)
+	{
+	  if (DFA[i][j] == NULL)
+	    fprintf(output, "0 ");
+	  else
+	    fprintf(output, "%d ", DFA[i][j]);
+
+	  if (j % 10 == 0)
+	    fprintf(output, "\n");
+	}
+      fprintf(output, "\n");
+    }
+}
+
+bool equal(set s1, set s2)
+{
+  int i;
+  if (s1.size != s2.size)
+    return false;
+  else
+    for (i = 0; i < s1.size; i++)
+      if (s1.array[i] != s2.array[i])
+	return false;
+
+  return true;
+}
+
+int main()
+{
+  input = fopen("input.txt", "r");
+  output = fopen("output.txt", "w");
+  int n = 8;
+
+  set **NFA;
+  NFA = (set**)malloc(n * sizeof(set)); 
+ 
+  int i;
+
+  for (i = 0; i < n; i++)
+    NFA[i] = (set*)malloc(256 * sizeof(set));
+  
+  scan(NFA);
+  
+  int** DFA;
+  int DFA_size = 1;
+
+  DFA = (int**)malloc(DFA_size * sizeof(int));
+  DFA[0] = (int*)malloc(256 * sizeof(int));
+
+  set* queue;
+  int queue_size = 1;
+  queue = (set*)malloc(1 * sizeof(set));
+  push(&queue[0], 0);
+
+  set* keys;
+  int keys_size = 1;
+  keys = (set*)malloc(1 * sizeof(set));
+  push(&keys[0], 0);
+  
+  i = 0;
+  
+  int j, k, l, r;
+  int cnt_of_states = 0;
+
+  while (i < queue_size)
+    {
+      for (j = 0; j < 256; j++)
+	{
+	  set foo;
+	  foo.size = 0;
+
+	  for (k = 0; k < queue[i].size; k++)
+	    {
+	      for (l = 0; l < NFA[k][j].size; l++)
+		{
+		  
+		  printf("%d", foo.size);
+		  push(&foo, NFA[k][j].array[l]);
+		}
+	    }
+	 
+
+	  bool flag = false;
+	  
+	  for (r = 0; r < queue_size; r++)
+	    {
+	      if (equal(queue[r], foo))
+		{
+		  flag = true;
+		  break;
+		}
+	    }
+
+	  if (flag == false && foo.size != 0)
+	    {
+	      cnt_of_states++;
+
+	      queue_size++;
+	      queue = (set*)realloc(queue, queue_size * sizeof(set));
+	      queue[queue_size - 1] = foo;
+	      
+	      DFA_size++;
+	      DFA = (int**)realloc(DFA, DFA_size * sizeof(int));
+	      DFA[DFA_size - 1] = (int*)malloc(256 * sizeof(int));
+	      DFA[i][j] = cnt_of_states;
+
+	      keys_size++;
+	      keys = (set*)realloc(keys, keys_size * sizeof(set));
+	      keys[keys_size - 1] = foo;
+	    }
+	}
+      i++;
+    }
+
+  print(DFA, DFA_size);
+
+  fclose(input);
+  fclose(output);
+
+  return 0;
+}
