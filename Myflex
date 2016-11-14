@@ -4,7 +4,6 @@
 
 FILE* input;
 FILE* output;
-FILE* long_debug;
 
 typedef struct my_set
 {
@@ -100,23 +99,13 @@ bool equal(set s1, set s2)
   return true;
 }
 
-int main()
+void tompson(set **NFA, int ***DFA)
 {
-  input = fopen("input.txt", "r");
-  output = fopen("output.txt", "w");
-  long_debug = fopen("long_debug.txt", "w");
-
-  set **NFA;
-  init_NFA(&NFA);
-  
-  int **DFA;
-  init_DFA(&DFA);
-  
   set *queue;
   queue = (set*)malloc(1 * sizeof(set));
   push_into_set(&queue[0], 0);
   int cnt_of_states = 1;
-  
+
   int i = 0, j, k, l, state;
   set collect;
 
@@ -131,7 +120,6 @@ int main()
 	  for (k = 0; k < queue[i].size; k++)
 	      for (l = 0; l < NFA[queue[i].array[k]][j].size; l++)
 		push_into_set(&collect, NFA[queue[i].array[k]][j].array[l]);
-
 
 	  for (k = 0; k < cnt_of_states; k++)
 	    if (equal(collect, queue[k]))
@@ -149,23 +137,36 @@ int main()
 		for (k = 0; k < collect.size; k++)
 		    push_into_set(&queue[cnt_of_states - 1], collect.array[k]);     
 
-		DFA = (int**)realloc(DFA, cnt_of_states * sizeof(int*));
-		DFA[cnt_of_states - 1] = (int*)malloc(256 * sizeof(int));
-		DFA[i][j] = cnt_of_states - 1;		
+		*DFA = (int**)realloc(*DFA, cnt_of_states * sizeof(int*));
+		(*DFA)[cnt_of_states - 1] = (int*)malloc(256 * sizeof(int));
+		(*DFA)[i][j] = cnt_of_states - 1;		
 	      }
 	    else
 	      {
-		DFA[i][j] = state;
+		(*DFA)[i][j] = state;
 	      }
 	  free(collect.array);
 	}
       i++;
     }
+  
+   print(*DFA, cnt_of_states);
+}
 
-  print(DFA, cnt_of_states);
+int main()
+{
+  input = fopen("input.txt", "r");
+  output = fopen("output.txt", "w");
+
+  set **NFA;
+  init_NFA(&NFA);
+  
+  int **DFA;
+  init_DFA(&DFA);
+  
+  tompson(NFA, &DFA);
 
   fclose(input);
   fclose(output);
-
   return 0;
 }
